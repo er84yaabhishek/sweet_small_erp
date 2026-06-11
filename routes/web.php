@@ -38,16 +38,27 @@ Route::middleware(['auth'])->group(function () {
     
     // Modules
     Route::resource('categories', CategoryController::class);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('units', UnitController::class);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('items', ItemController::class);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('suppliers', SupplierController::class);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('purchases', PurchaseController::class)->except(['edit', 'update']);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('purchase-returns', PurchaseReturnController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('recipes', RecipeController::class);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('production-logs', ProductionLogController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('sales', SaleController::class)->except(['edit', 'update']);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('sale-returns', SaleReturnController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('expenses', ExpenseController::class);
+    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     
     // Language Switcher
     Route::get('/lang/{locale}', function ($locale) {
@@ -108,4 +119,7 @@ Route::middleware(["auth"])->prefix("admin/frontend")->name("admin.frontend.")->
     Route::get("/testimonial/delete/{id}", [App\Http\Controllers\FrontendSettingsController::class, "deleteTestimonial"])->name("testimonial.delete");
     Route::post("/demo/update/{id}", [App\Http\Controllers\FrontendSettingsController::class, "updateDemoStatus"])->name("demo.update");
 });
+
+
+Route::get('/sales/{id}/thermal', [App\Http\Controllers\SaleController::class, 'thermalReceipt'])->name('sales.thermal');
 

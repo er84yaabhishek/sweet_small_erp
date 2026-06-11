@@ -72,4 +72,11 @@ class SaleController extends Controller
     {
         abort(405, 'Sales cannot be deleted. Use return or cancellation instead.');
     }
+
+    public function thermalReceipt($id)
+{
+    $sale = $this->saleService->getSaleById($id);
+    $settings = \App\Models\Setting::all()->pluck('value', 'key');
+    return view('sales.thermal_receipt', compact('sale', 'settings'));
+}
 }
