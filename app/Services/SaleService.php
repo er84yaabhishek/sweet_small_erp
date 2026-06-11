@@ -31,7 +31,6 @@ class SaleService
 
     public function createSale(array $data, array $items, array $payments)
     {
-        // Calculate totals
         $subtotal = collect($items)->sum('line_total');
         $discount = $data['discount_amount'] ?? 0;
         $tax = collect($items)->sum('tax_amount');
@@ -42,17 +41,20 @@ class SaleService
         $data['tax_amount'] = $tax;
         $data['total_amount'] = $total;
         $data['status'] = 'completed';
+        $data['sale_date'] = $data['sale_date'] ?? date('Y-m-d');
+        $data['sale_time'] = $data['sale_time'] ?? date('H:i:s');
 
         return $this->saleRepo->create($data, $items, $payments);
     }
 
     public function getSellableItems()
     {
-        return $this->itemRepo->getAll(1000, ['is_sellable' => true])->items();
+        $items = $this->itemRepo->getAll(1000, ['is_sellable' => true]);
+        return $items->items();
     }
 
     public function getCustomers()
     {
-        return $this->customerRepo->getAll(1000)->items();
+        return $this->customerRepo->getAllCustomers();
     }
 }

@@ -94,3 +94,18 @@ Route::get('/api/sale/{invoice}', function($invoice) {
 Route::get('/', function () {
     return redirect()->route('login');
 });
+// Frontend Routes
+Route::get("/", [App\Http\Controllers\FrontendController::class, "index"])->name("frontend.home");
+Route::post("/demo-request", [App\Http\Controllers\FrontendController::class, "submitDemo"])->name("demo.request");
+
+// Admin Frontend Settings
+Route::middleware(["auth"])->prefix("admin/frontend")->name("admin.frontend.")->group(function () {
+    Route::get("/", [App\Http\Controllers\FrontendSettingsController::class, "index"])->name("settings");
+    Route::post("/settings", [App\Http\Controllers\FrontendSettingsController::class, "updateSettings"])->name("settings.update");
+    Route::post("/featured/add", [App\Http\Controllers\FrontendSettingsController::class, "addFeaturedProduct"])->name("featured.add");
+    Route::get("/featured/remove/{id}", [App\Http\Controllers\FrontendSettingsController::class, "removeFeaturedProduct"])->name("featured.remove");
+    Route::post("/testimonial/add", [App\Http\Controllers\FrontendSettingsController::class, "addTestimonial"])->name("testimonial.add");
+    Route::get("/testimonial/delete/{id}", [App\Http\Controllers\FrontendSettingsController::class, "deleteTestimonial"])->name("testimonial.delete");
+    Route::post("/demo/update/{id}", [App\Http\Controllers\FrontendSettingsController::class, "updateDemoStatus"])->name("demo.update");
+});
+

@@ -7,33 +7,24 @@
         <i class="fas fa-plus"></i> New Return
     </a>
 </div>
-
 <div class="card">
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark">
-                    <tr><th>ID</th><th>Return Date</th><th>Supplier</th><th>Purchase Bill</th><th>Total Amount</th><th>Reason</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                    @foreach($returns as $return)
-                    <tr>
-                        <td>{{ $return->id }}</td>
-                        <td>{{ $return->return_date }}</td>
-                        <td>{{ $return->supplier->name }}</td>
-                        <td>{{ $return->purchase ? '#' . $return->purchase->id : 'Direct Return' }}</td>
-                        <td class="text-danger">₹{{ number_format($return->total_amount, 2) }}</td>
-                        <td>{{ Str::limit($return->reason, 30) ?? '-' }}</td>
-                        <td>
-                            <a href="{{ route('purchase-returns.show', $return->id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr><th>ID</th><th>Date</th><th>Supplier</th><th>Amount</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach($returns as $return)
+                <tr>
+                    <td>{{ $return->id }}</td>
+                    <td>{{ $return->return_date }}</td>
+                    <td>{{ $return->supplier->name }}</td>
+                    <td>₹{{ number_format($return->total_amount, 2) }}</td>
+                    <td><a href="{{ route('purchase-returns.show', $return->id) }}" class="btn btn-sm btn-info">View</a></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
         {{ $returns->links() }}
     </div>
 </div>

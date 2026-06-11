@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\RecipeService;
 use App\Http\Requests\RecipeRequest;
-use Illuminate\Http\Request;
 
 class RecipeController extends Controller
 {
@@ -36,7 +35,7 @@ class RecipeController extends Controller
     public function store(RecipeRequest $request)
     {
         $ingredients = json_decode($request->ingredients_json, true);
-        if (count($ingredients) == 0) {
+        if (empty($ingredients)) {
             return back()->withErrors('At least one ingredient required.');
         }
         $this->recipeService->createRecipe($request->validated(), $ingredients);

@@ -16,7 +16,6 @@ class SaleController extends Controller
         $this->saleService = $saleService;
         $this->middleware('permission:view_sales')->only(['index', 'show']);
         $this->middleware('permission:create_sale')->only(['create', 'store']);
-        $this->middleware('permission:edit_sale')->only(['edit', 'update']);
         $this->middleware('permission:delete_sale')->only('destroy');
     }
 
@@ -35,41 +34,33 @@ class SaleController extends Controller
         return view('sales.create', compact('items', 'customers', 'multiPaymentEnabled'));
     }
 
-    // public function store(SaleRequest $request)
-    // {
-    //     $items = json_decode($request->items_json, true);
-    //     $payments = json_decode($request->payments_json, true);
-
-    //     if (empty($items)) {
-    //         return back()->withErrors('At least one item required.');
-    //     }
-    //     if (empty($payments)) {
-    //         return back()->withErrors('At least one payment required.');
-    //     }
-
-    //     $sale = $this->saleService->createSale($request->validated(), $items, $payments);
-    //     return redirect()->route('sales.show', $sale->id)->with('success', 'Bill created successfully.');
-    // }
-
     public function store(SaleRequest $request)
-{
-    $items = $request->input('items', []);
-    $payments = $request->input('payments', []);
-    
-    if (empty($items)) {
-        return response()->json(['message' => 'No items'], 422);
+    {
+        $items = json_decode($request->input('items_json', '[]'), true);
+        $payments = json_decode($request->input('payments_json', '[]'), true);
+
+        if (empty($items)) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'No items selected'], 422);
+            }
+            return back()->withErrors('At least one item is required.');
+        }
+
+        if (empty($payments)) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'No payment added'], 422);
+            }
+            return back()->withErrors('At least one payment is required.');
+        }
+
+        $sale = $this->saleService->createSale($request->validated(), $items, $payments);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'sale_id' => $sale->id]);
+        }
+
+        return redirect()->route('sales.show', $sale->id)->with('success', 'Bill created successfully.');
     }
-    if (empty($payments)) {
-        return response()->json(['message' => 'No payments'], 422);
-    }
-    
-    $sale = $this->saleService->createSale($request->validated(), $items, $payments);
-    
-    if ($request->wantsJson()) {
-        return response()->json(['success' => true, 'sale_id' => $sale->id]);
-    }
-    
-    return redirect()->route('sales.show', $sale->id)->with('success', 'Bill created successfully.');
 
     public function show($id)
     {
@@ -79,7 +70,6 @@ class SaleController extends Controller
 
     public function destroy($id)
     {
-        // Disallow deletion - use returns or adjustment
-        abort(405, 'Sales cannot be deleted. Use return or cancellation.');
+        abort(405, 'Sales cannot be deleted. Use return or cancellation instead.');
     }
 }

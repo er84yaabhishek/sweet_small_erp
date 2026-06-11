@@ -7,7 +7,6 @@ use App\Models\SaleItem;
 use App\Models\SalePayment;
 use App\Models\StockLedger;
 use Illuminate\Support\Facades\DB;
-use App\Models\FeaturePermission;
 
 class SaleRepository
 {
@@ -31,22 +30,15 @@ class SaleRepository
         return Sale::with(['customer', 'items.item', 'payments'])->findOrFail($id);
     }
 
-    public function findByInvoiceNo($invoiceNo)
-    {
-        return Sale::where('invoice_no', $invoiceNo)->firstOrFail();
-    }
-
     public function create(array $data, array $items, array $payments)
     {
         DB::beginTransaction();
         try {
-            // Generate invoice number
             $data['invoice_no'] = $this->generateInvoiceNo();
             $data['created_by'] = auth()->id();
 
             $sale = Sale::create($data);
 
-            // Sale items & stock deduction
             foreach ($items as $item) {
                 SaleItem::create([
                     'sale_id' => $sale->id,
@@ -58,7 +50,6 @@ class SaleRepository
                     'line_total' => $item['line_total'],
                 ]);
 
-                // Stock ledger OUT
                 StockLedger::create([
                     'item_id' => $item['item_id'],
                     'txn_type' => 'sale',
@@ -71,7 +62,6 @@ class SaleRepository
                 ]);
             }
 
-            // Payments
             foreach ($payments as $payment) {
                 SalePayment::create([
                     'sale_id' => $sale->id,
@@ -87,14 +77,6 @@ class SaleRepository
             DB::rollBack();
             throw $e;
         }
-    }
-
-    public function updateStatus($id, $status)
-    {
-        $sale = $this->findById($id);
-        $sale->status = $status;
-        $sale->save();
-        return $sale;
     }
 
     private function generateInvoiceNo()

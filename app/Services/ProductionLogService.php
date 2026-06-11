@@ -28,7 +28,6 @@ class ProductionLogService
 
     public function createLog(array $data)
     {
-        // Auto-calculate qty_produced = batches * recipe.batch_qty
         $recipe = $this->recipeRepo->findById($data['recipe_id']);
         $data['item_id'] = $recipe->item_id;
         $data['qty_produced'] = $data['batches'] * $recipe->batch_qty;

@@ -33,16 +33,15 @@ class PurchaseReturnController extends Controller
         $purchaseItems = [];
         if ($request->purchase_id) {
             $selectedPurchase = $this->purchaseService->getPurchaseById($request->purchase_id);
-            $purchaseItems = $selectedPurchase->items; // to allow selection
+            $purchaseItems = $selectedPurchase->items;
         }
         return view('purchase_returns.create', compact('suppliers', 'selectedPurchase', 'purchaseItems'));
     }
 
     public function store(PurchaseReturnRequest $request)
     {
-        // Items JSON from frontend
         $items = json_decode($request->items_json, true);
-        if (!$items || count($items) == 0) {
+        if (empty($items)) {
             return back()->withErrors('At least one item required.');
         }
         $this->returnService->createReturn($request->validated(), $items);
