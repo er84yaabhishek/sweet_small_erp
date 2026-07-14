@@ -4,11 +4,19 @@ namespace App\Repositories;
 
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnItem;
-use App\Models\StockLedger;
+use App\Repositories\Contracts\ReturnRepository;
+use App\Services\StockLedgerService;
 use Illuminate\Support\Facades\DB;
 
-class PurchaseReturnRepository
+class PurchaseReturnRepository implements ReturnRepository
 {
+    protected $stockLedgerService;
+
+    public function __construct(StockLedgerService $stockLedgerService)
+    {
+        $this->stockLedgerService = $stockLedgerService;
+    }
+
     public function getAll($perPage = 20)
     {
         return PurchaseReturn::with(['supplier', 'purchase', 'createdBy'])
@@ -23,8 +31,7 @@ class PurchaseReturnRepository
 
     public function create(array $data, array $items)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($data, $items) {
             $return = PurchaseReturn::create($data);
             foreach ($items as $item) {
                 PurchaseReturnItem::create([
@@ -34,23 +41,17 @@ class PurchaseReturnRepository
                     'unit_price' => $item['unit_price'],
                     'line_total' => $item['line_total'],
                 ]);
-                // Add stock ledger entry (outgoing)
-                StockLedger::create([
-                    'item_id' => $item['item_id'],
-                    'txn_type' => 'purchase_return',
-                    'reference_type' => 'purchase_return',
-                    'reference_id' => $return->id,
-                    'qty_in' => 0,
-                    'qty_out' => $item['qty'],
-                    'rate' => $item['unit_price'],
-                    'created_by' => auth()->id(),
-                ]);
+                $this->stockLedgerService->recordOutbound(
+                    $item['item_id'],
+                    'purchase_return',
+                    'purchase_return',
+                    $return->id,
+                    $item['qty'],
+                    $item['unit_price']
+                );
             }
-            DB::commit();
+
             return $return;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 }

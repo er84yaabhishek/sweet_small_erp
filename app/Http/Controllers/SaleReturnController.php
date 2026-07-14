@@ -39,7 +39,7 @@ class SaleReturnController extends Controller
 
     public function store(SaleReturnRequest $request)
     {
-        $items = json_decode($request->items_json, true);
+        $items = $this->decodeJsonArray($request, 'items_json');
         if (empty($items)) {
             return back()->withErrors('At least one item to return.');
         }

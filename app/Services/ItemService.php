@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Item;
 use App\Repositories\ItemRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -27,63 +28,46 @@ class ItemService
 
     public function createItem(array $data)
     {
-        DB::beginTransaction();
-        try {
-            // Handle image upload
+        return DB::transaction(function () use ($data) {
             if (isset($data['image']) && $data['image']->isValid()) {
                 $path = $data['image']->store('items', 'public');
                 $data['image'] = $path;
             }
-            // Auto-generate SKU if not provided
+
             if (empty($data['sku'])) {
                 $data['sku'] = $this->generateSku($data['name']);
             }
-            $item = $this->itemRepo->create($data);
-            DB::commit();
-            return $item;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+
+            return $this->itemRepo->create($data);
+        });
     }
 
     public function updateItem($id, array $data)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($id, $data) {
             $item = $this->itemRepo->findById($id);
             if (isset($data['image']) && $data['image']->isValid()) {
-                // Delete old image
                 if ($item->image && Storage::disk('public')->exists($item->image)) {
                     Storage::disk('public')->delete($item->image);
                 }
                 $path = $data['image']->store('items', 'public');
                 $data['image'] = $path;
             }
-            $item = $this->itemRepo->update($id, $data);
-            DB::commit();
-            return $item;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+
+            return $this->itemRepo->update($id, $data);
+        });
     }
 
     public function deleteItem($id)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($id) {
             $item = $this->itemRepo->findById($id);
             if ($item->image && Storage::disk('public')->exists($item->image)) {
                 Storage::disk('public')->delete($item->image);
             }
-            $result = $this->itemRepo->delete($id);
-            DB::commit();
-            return $result;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+
+            return $this->itemRepo->delete($id);
+        });
     }
 
     private function generateSku($name)

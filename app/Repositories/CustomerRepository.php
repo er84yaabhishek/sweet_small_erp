@@ -4,8 +4,13 @@ namespace App\Repositories;
 
 use App\Models\Customer;
 
-class CustomerRepository
+class CustomerRepository extends BaseRepository
 {
+    protected function modelClass(): string
+    {
+        return Customer::class;
+    }
+
     public function getAll($perPage = 20)
     {
         return Customer::orderBy('name')->paginate($perPage);
@@ -14,28 +19,5 @@ class CustomerRepository
     public function getAllCustomers()
     {
         return Customer::orderBy('name')->get();
-    }
-
-    public function findById($id)
-    {
-        return Customer::findOrFail($id);
-    }
-
-    public function create(array $data)
-    {
-        return Customer::create($data);
-    }
-
-    public function update($id, array $data)
-    {
-        $customer = $this->findById($id);
-        $customer->update($data);
-        return $customer;
-    }
-
-    public function delete($id)
-    {
-        $customer = $this->findById($id);
-        return $customer->delete();
     }
 }

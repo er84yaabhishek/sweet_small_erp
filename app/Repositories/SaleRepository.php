@@ -5,11 +5,18 @@ namespace App\Repositories;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalePayment;
-use App\Models\StockLedger;
+use App\Services\StockLedgerService;
 use Illuminate\Support\Facades\DB;
 
 class SaleRepository
 {
+    protected $stockLedgerService;
+
+    public function __construct(StockLedgerService $stockLedgerService)
+    {
+        $this->stockLedgerService = $stockLedgerService;
+    }
+
     public function getAll($perPage = 20, $filters = [])
     {
         $query = Sale::with(['customer', 'createdBy']);
@@ -32,8 +39,7 @@ class SaleRepository
 
     public function create(array $data, array $items, array $payments)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($data, $items, $payments) {
             $data['invoice_no'] = $this->generateInvoiceNo();
             $data['created_by'] = auth()->id();
 
@@ -50,16 +56,14 @@ class SaleRepository
                     'line_total' => $item['line_total'],
                 ]);
 
-                StockLedger::create([
-                    'item_id' => $item['item_id'],
-                    'txn_type' => 'sale',
-                    'reference_type' => 'sale',
-                    'reference_id' => $sale->id,
-                    'qty_in' => 0,
-                    'qty_out' => $item['qty'],
-                    'rate' => $item['unit_price'],
-                    'created_by' => auth()->id(),
-                ]);
+                $this->stockLedgerService->recordOutbound(
+                    $item['item_id'],
+                    'sale',
+                    'sale',
+                    $sale->id,
+                    $item['qty'],
+                    $item['unit_price']
+                );
             }
 
             foreach ($payments as $payment) {
@@ -71,12 +75,8 @@ class SaleRepository
                 ]);
             }
 
-            DB::commit();
             return $sale;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     private function generateInvoiceNo()
