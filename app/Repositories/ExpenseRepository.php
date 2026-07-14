@@ -4,8 +4,13 @@ namespace App\Repositories;
 
 use App\Models\Expense;
 
-class ExpenseRepository
+class ExpenseRepository extends BaseRepository
 {
+    protected function modelClass(): string
+    {
+        return Expense::class;
+    }
+
     public function getAll($perPage = 20, $filters = [])
     {
         $query = Expense::with('createdBy');
@@ -19,28 +24,5 @@ class ExpenseRepository
             $query->whereDate('expense_date', '<=', $filters['to_date']);
         }
         return $query->orderByDesc('expense_date')->paginate($perPage);
-    }
-
-    public function findById($id)
-    {
-        return Expense::findOrFail($id);
-    }
-
-    public function create(array $data)
-    {
-        return Expense::create($data);
-    }
-
-    public function update($id, array $data)
-    {
-        $expense = $this->findById($id);
-        $expense->update($data);
-        return $expense;
-    }
-
-    public function delete($id)
-    {
-        $expense = $this->findById($id);
-        return $expense->delete();
     }
 }

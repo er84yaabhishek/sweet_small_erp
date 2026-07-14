@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Repositories\CategoryRepository;
-use Illuminate\Support\Facades\DB;
 
 class CategoryService
 {
@@ -26,40 +25,16 @@ class CategoryService
 
     public function createCategory(array $data)
     {
-        DB::beginTransaction();
-        try {
-            $category = $this->categoryRepo->create($data);
-            DB::commit();
-            return $category;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->categoryRepo->create($data);
     }
 
     public function updateCategory($id, array $data)
     {
-        DB::beginTransaction();
-        try {
-            $category = $this->categoryRepo->update($id, $data);
-            DB::commit();
-            return $category;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->categoryRepo->update($id, $data);
     }
 
     public function deleteCategory($id)
     {
-        DB::beginTransaction();
-        try {
-            $result = $this->categoryRepo->delete($id);
-            DB::commit();
-            return $result;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return $this->categoryRepo->delete($id);
     }
 }

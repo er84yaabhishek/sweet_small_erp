@@ -40,7 +40,7 @@ class PurchaseReturnController extends Controller
 
     public function store(PurchaseReturnRequest $request)
     {
-        $items = json_decode($request->items_json, true);
+        $items = $this->decodeJsonArray($request, 'items_json');
         if (empty($items)) {
             return back()->withErrors('At least one item required.');
         }

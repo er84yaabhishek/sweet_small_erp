@@ -3,11 +3,18 @@
 namespace App\Repositories;
 
 use App\Models\ProductionLog;
-use App\Models\StockLedger;
+use App\Services\StockLedgerService;
 use Illuminate\Support\Facades\DB;
 
 class ProductionLogRepository
 {
+    protected $stockLedgerService;
+
+    public function __construct(StockLedgerService $stockLedgerService)
+    {
+        $this->stockLedgerService = $stockLedgerService;
+    }
+
     public function getAll($perPage = 20)
     {
         return ProductionLog::with(['recipe.item', 'item', 'createdBy'])->orderByDesc('production_date')->paginate($perPage);
@@ -20,46 +27,33 @@ class ProductionLogRepository
 
     public function create(array $data)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($data) {
             $log = ProductionLog::create($data);
             $recipe = $log->recipe;
             $batches = $log->batches;
             $qtyProduced = $log->qty_produced;
 
-            // Stock OUT for each raw material
             foreach ($recipe->ingredients as $ingredient) {
                 $totalQtyOut = $ingredient->qty_required * $batches;
-                StockLedger::create([
-                    'item_id' => $ingredient->ingredient_item_id,
-                    'txn_type' => 'production_out',
-                    'reference_type' => 'production_log',
-                    'reference_id' => $log->id,
-                    'qty_in' => 0,
-                    'qty_out' => $totalQtyOut,
-                    'rate' => null, // cost may be derived from purchase average, but optional
-                    'created_by' => auth()->id(),
-                ]);
+                $this->stockLedgerService->recordOutbound(
+                    $ingredient->ingredient_item_id,
+                    'production_out',
+                    'production_log',
+                    $log->id,
+                    $totalQtyOut
+                );
             }
 
-            // Stock IN for finished good
-            StockLedger::create([
-                'item_id' => $log->item_id,
-                'txn_type' => 'production_in',
-                'reference_type' => 'production_log',
-                'reference_id' => $log->id,
-                'qty_in' => $qtyProduced,
-                'qty_out' => 0,
-                'rate' => null,
-                'created_by' => auth()->id(),
-            ]);
+            $this->stockLedgerService->recordInbound(
+                $log->item_id,
+                'production_in',
+                'production_log',
+                $log->id,
+                $qtyProduced
+            );
 
-            DB::commit();
             return $log;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     public function delete($id)

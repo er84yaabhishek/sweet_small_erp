@@ -3,10 +3,14 @@
 namespace App\Repositories;
 
 use App\Models\Item;
-use Illuminate\Support\Facades\DB;
 
-class ItemRepository
+class ItemRepository extends BaseRepository
 {
+    protected function modelClass(): string
+    {
+        return Item::class;
+    }
+
     public function getAll($perPage = 20, $filters = [])
     {
         $query = Item::with(['category', 'unit', 'taxRate']);
@@ -29,24 +33,6 @@ class ItemRepository
     public function findById($id)
     {
         return Item::with(['category', 'unit', 'taxRate'])->findOrFail($id);
-    }
-
-    public function create(array $data)
-    {
-        return Item::create($data);
-    }
-
-    public function update($id, array $data)
-    {
-        $item = $this->findById($id);
-        $item->update($data);
-        return $item;
-    }
-
-    public function delete($id)
-    {
-        $item = $this->findById($id);
-        return $item->delete();
     }
 
     public function getSellableItems()

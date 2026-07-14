@@ -4,11 +4,18 @@ namespace App\Repositories;
 
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
-use App\Models\StockLedger;
+use App\Services\StockLedgerService;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseRepository
 {
+    protected $stockLedgerService;
+
+    public function __construct(StockLedgerService $stockLedgerService)
+    {
+        $this->stockLedgerService = $stockLedgerService;
+    }
+
     public function getAll($perPage = 20, $filters = [])
     {
         $query = Purchase::with(['supplier', 'createdBy']);
@@ -31,11 +38,10 @@ class PurchaseRepository
 
     public function create(array $data, array $items)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($data, $items) {
             $purchase = Purchase::create($data);
             foreach ($items as $item) {
-                $purchaseItem = PurchaseItem::create([
+                PurchaseItem::create([
                     'purchase_id' => $purchase->id,
                     'item_id' => $item['item_id'],
                     'qty' => $item['qty'],
@@ -43,24 +49,18 @@ class PurchaseRepository
                     'tax_amount' => $item['tax_amount'] ?? 0,
                     'line_total' => $item['line_total'],
                 ]);
-                // Add stock ledger entry
-                StockLedger::create([
-                    'item_id' => $item['item_id'],
-                    'txn_type' => 'purchase',
-                    'reference_type' => 'purchase',
-                    'reference_id' => $purchase->id,
-                    'qty_in' => $item['qty'],
-                    'qty_out' => 0,
-                    'rate' => $item['unit_price'],
-                    'created_by' => auth()->id(),
-                ]);
+                $this->stockLedgerService->recordInbound(
+                    $item['item_id'],
+                    'purchase',
+                    'purchase',
+                    $purchase->id,
+                    $item['qty'],
+                    $item['unit_price']
+                );
             }
-            DB::commit();
+
             return $purchase;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     public function update($id, array $data)

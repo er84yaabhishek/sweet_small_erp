@@ -20,52 +20,41 @@ class RecipeRepository
 
     public function create(array $data, array $ingredients)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($data, $ingredients) {
             $recipe = Recipe::create($data);
-            foreach ($ingredients as $ing) {
-                RecipeIngredient::create([
-                    'recipe_id' => $recipe->id,
-                    'ingredient_item_id' => $ing['ingredient_item_id'],
-                    'qty_required' => $ing['qty_required'],
-                    'unit_id' => $ing['unit_id'],
-                ]);
-            }
-            DB::commit();
+            $this->createIngredients($recipe->id, $ingredients);
+
             return $recipe;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     public function update($id, array $data, array $ingredients)
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($id, $data, $ingredients) {
             $recipe = $this->findById($id);
             $recipe->update($data);
-            // Delete existing ingredients and recreate
             $recipe->ingredients()->delete();
-            foreach ($ingredients as $ing) {
-                RecipeIngredient::create([
-                    'recipe_id' => $recipe->id,
-                    'ingredient_item_id' => $ing['ingredient_item_id'],
-                    'qty_required' => $ing['qty_required'],
-                    'unit_id' => $ing['unit_id'],
-                ]);
-            }
-            DB::commit();
+            $this->createIngredients($recipe->id, $ingredients);
+
             return $recipe;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     public function delete($id)
     {
         $recipe = $this->findById($id);
         return $recipe->delete();
+    }
+
+    private function createIngredients($recipeId, array $ingredients)
+    {
+        foreach ($ingredients as $ingredient) {
+            RecipeIngredient::create([
+                'recipe_id' => $recipeId,
+                'ingredient_item_id' => $ingredient['ingredient_item_id'],
+                'qty_required' => $ingredient['qty_required'],
+                'unit_id' => $ingredient['unit_id'],
+            ]);
+        }
     }
 }

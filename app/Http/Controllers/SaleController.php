@@ -36,8 +36,8 @@ class SaleController extends Controller
 
     public function store(SaleRequest $request)
     {
-        $items = json_decode($request->input('items_json', '[]'), true);
-        $payments = json_decode($request->input('payments_json', '[]'), true);
+        $items = $this->decodeJsonArray($request, 'items_json');
+        $payments = $this->decodeJsonArray($request, 'payments_json');
 
         if (empty($items)) {
             if ($request->wantsJson()) {
