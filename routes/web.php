@@ -38,28 +38,51 @@ Route::middleware(['auth'])->group(function () {
     
     // Modules
     Route::resource('categories', CategoryController::class);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('units', UnitController::class);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('items', ItemController::class);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('suppliers', SupplierController::class);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('purchases', PurchaseController::class)->except(['edit', 'update']);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('purchase-returns', PurchaseReturnController::class)->only(['index', 'create', 'store', 'show']);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('recipes', RecipeController::class);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('production-logs', ProductionLogController::class)->only(['index', 'create', 'store', 'show']);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('sales', SaleController::class)->except(['edit', 'update']);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('sale-returns', SaleReturnController::class)->only(['index', 'create', 'store', 'show']);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
     Route::resource('expenses', ExpenseController::class);
-    Route::get("/sales/{id}/thermal", [App\Http\Controllers\SaleController::class, "thermalReceipt"])->name("sales.thermal");
-    
+
+    // Sale thermal receipt
+    Route::get('/sales/{id}/thermal', [SaleController::class, 'thermalReceipt'])->name('sales.thermal');
+
+    // Internal AJAX/API endpoints (authenticated)
+    Route::get('/api/items/purchasable/{supplierId}', function ($supplierId) {
+        return \App\Models\Item::where('is_purchasable', true)->where('is_active', true)->get(['id', 'name']);
+    });
+
+    Route::get('/api/recipe/{id}/batch-qty', function ($id) {
+        $recipe = \App\Models\Recipe::with('batchUnit')->findOrFail($id);
+        return response()->json([
+            'batch_qty' => $recipe->batch_qty,
+            'unit' => $recipe->batchUnit->short_name,
+        ]);
+    });
+
+    Route::get('/api/sale/{invoice}', function ($invoice) {
+        $sale = \App\Models\Sale::with('items.item')->where('invoice_no', $invoice)->firstOrFail();
+        return response()->json([
+            'invoice_no' => $sale->invoice_no,
+            'sale_date' => $sale->sale_date,
+            'customer_name' => $sale->customer->name ?? 'Walk-in',
+            'total_amount' => $sale->total_amount,
+            'items' => $sale->items->map(function ($item) {
+                return [
+                    'item_id' => $item->item_id,
+                    'name' => $item->item->name,
+                    'qty' => $item->qty,
+                    'unit_price' => $item->unit_price,
+                ];
+            }),
+        ]);
+    });
+
     // Language Switcher
     Route::get('/lang/{locale}', function ($locale) {
         if (in_array($locale, ['en', 'hi'])) {
@@ -70,42 +93,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('lang');
 });
 
-// ============ API Routes ============
-Route::get('/api/items/purchasable/{supplierId}', function($supplierId) {
-    return \App\Models\Item::where('is_purchasable', true)->where('is_active', true)->get(['id', 'name']);
-});
-
-Route::get('/api/recipe/{id}/batch-qty', function($id) {
-    $recipe = \App\Models\Recipe::with('batchUnit')->findOrFail($id);
-    return response()->json([
-        'batch_qty' => $recipe->batch_qty,
-        'unit' => $recipe->batchUnit->short_name
-    ]);
-});
-
-Route::get('/api/sale/{invoice}', function($invoice) {
-    $sale = \App\Models\Sale::with('items.item')->where('invoice_no', $invoice)->firstOrFail();
-    return response()->json([
-        'invoice_no' => $sale->invoice_no,
-        'sale_date' => $sale->sale_date,
-        'customer_name' => $sale->customer->name ?? 'Walk-in',
-        'total_amount' => $sale->total_amount,
-        'items' => $sale->items->map(function($item) {
-            return [
-                'item_id' => $item->item_id,
-                'name' => $item->item->name,
-                'qty' => $item->qty,
-                'unit_price' => $item->unit_price
-            ];
-        })
-    ]);
-});
-
-// Home redirect
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-// Frontend Routes
+// Frontend Routes (public landing page)
 Route::get("/", [App\Http\Controllers\FrontendController::class, "index"])->name("frontend.home");
 Route::post("/demo-request", [App\Http\Controllers\FrontendController::class, "submitDemo"])->name("demo.request");
 
@@ -114,12 +102,9 @@ Route::middleware(["auth"])->prefix("admin/frontend")->name("admin.frontend.")->
     Route::get("/", [App\Http\Controllers\FrontendSettingsController::class, "index"])->name("settings");
     Route::post("/settings", [App\Http\Controllers\FrontendSettingsController::class, "updateSettings"])->name("settings.update");
     Route::post("/featured/add", [App\Http\Controllers\FrontendSettingsController::class, "addFeaturedProduct"])->name("featured.add");
-    Route::get("/featured/remove/{id}", [App\Http\Controllers\FrontendSettingsController::class, "removeFeaturedProduct"])->name("featured.remove");
+    Route::post("/featured/remove/{id}", [App\Http\Controllers\FrontendSettingsController::class, "removeFeaturedProduct"])->name("featured.remove");
     Route::post("/testimonial/add", [App\Http\Controllers\FrontendSettingsController::class, "addTestimonial"])->name("testimonial.add");
-    Route::get("/testimonial/delete/{id}", [App\Http\Controllers\FrontendSettingsController::class, "deleteTestimonial"])->name("testimonial.delete");
+    Route::post("/testimonial/delete/{id}", [App\Http\Controllers\FrontendSettingsController::class, "deleteTestimonial"])->name("testimonial.delete");
     Route::post("/demo/update/{id}", [App\Http\Controllers\FrontendSettingsController::class, "updateDemoStatus"])->name("demo.update");
 });
-
-
-Route::get('/sales/{id}/thermal', [App\Http\Controllers\SaleController::class, 'thermalReceipt'])->name('sales.thermal');
 
