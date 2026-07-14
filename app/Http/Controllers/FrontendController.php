@@ -20,14 +20,14 @@ class FrontendController extends Controller
 
     public function submitDemo(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:100',
             'phone' => 'required|string|max:15',
             'shop_name' => 'nullable|string|max:150',
             'message' => 'nullable|string',
         ]);
-        DemoRequest::create($request->all());
+        DemoRequest::create($validated);
         return back()->with('success', 'Demo request submitted successfully!');
     }
 }
