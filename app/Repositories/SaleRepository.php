@@ -73,7 +73,7 @@ class SaleRepository
 
             DB::commit();
             return $sale;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }

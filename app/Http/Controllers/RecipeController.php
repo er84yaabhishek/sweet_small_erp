@@ -34,7 +34,7 @@ class RecipeController extends Controller
 
     public function store(RecipeRequest $request)
     {
-        $ingredients = json_decode($request->ingredients_json, true);
+        $ingredients = $this->decodeJsonArray($request->ingredients_json, 'ingredients_json');
         if (empty($ingredients)) {
             return back()->withErrors('At least one ingredient required.');
         }
@@ -59,7 +59,10 @@ class RecipeController extends Controller
 
     public function update(RecipeRequest $request, $id)
     {
-        $ingredients = json_decode($request->ingredients_json, true);
+        $ingredients = $this->decodeJsonArray($request->ingredients_json, 'ingredients_json');
+        if (empty($ingredients)) {
+            return back()->withErrors('At least one ingredient required.');
+        }
         $this->recipeService->updateRecipe($id, $request->validated(), $ingredients);
         return redirect()->route('recipes.index')->with('success', 'Recipe updated successfully.');
     }

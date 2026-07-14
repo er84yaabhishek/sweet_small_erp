@@ -56,7 +56,7 @@ class ProductionLogRepository
 
             DB::commit();
             return $log;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
