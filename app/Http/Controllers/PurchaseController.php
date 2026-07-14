@@ -37,8 +37,8 @@ class PurchaseController extends Controller
     public function store(PurchaseRequest $request)
     {
         // Items come as array from dynamic form
-        $items = json_decode($request->items_json, true); // Assume we send JSON from frontend
-        if (!$items || count($items) == 0) {
+        $items = $this->decodeJsonArray($request->items_json, 'items_json');
+        if (empty($items)) {
             return back()->withErrors('At least one item required.');
         }
         $this->purchaseService->createPurchase($request->validated(), $items);

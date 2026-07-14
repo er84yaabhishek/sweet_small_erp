@@ -41,7 +41,7 @@ class ItemService
             $item = $this->itemRepo->create($data);
             DB::commit();
             return $item;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
@@ -63,7 +63,7 @@ class ItemService
             $item = $this->itemRepo->update($id, $data);
             DB::commit();
             return $item;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
@@ -80,7 +80,7 @@ class ItemService
             $result = $this->itemRepo->delete($id);
             DB::commit();
             return $result;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }

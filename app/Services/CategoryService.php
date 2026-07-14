@@ -31,7 +31,7 @@ class CategoryService
             $category = $this->categoryRepo->create($data);
             DB::commit();
             return $category;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
@@ -44,7 +44,7 @@ class CategoryService
             $category = $this->categoryRepo->update($id, $data);
             DB::commit();
             return $category;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
@@ -57,7 +57,7 @@ class CategoryService
             $result = $this->categoryRepo->delete($id);
             DB::commit();
             return $result;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }

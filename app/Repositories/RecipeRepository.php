@@ -33,7 +33,7 @@ class RecipeRepository
             }
             DB::commit();
             return $recipe;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
@@ -57,7 +57,7 @@ class RecipeRepository
             }
             DB::commit();
             return $recipe;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }

@@ -57,7 +57,7 @@ class PurchaseRepository
             }
             DB::commit();
             return $purchase;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
