@@ -33,11 +33,11 @@ class Controller extends BaseController
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw ValidationException::withMessages([
-                $field => 'Invalid data submitted (' . json_last_error_msg() . '). Please try again.',
+                $field => 'Invalid data submitted ('.json_last_error_msg().'). Please try again.',
             ]);
         }
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             throw ValidationException::withMessages([
                 $field => 'Invalid data submitted. Expected a list of records.',
             ]);
